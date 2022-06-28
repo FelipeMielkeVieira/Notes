@@ -1,0 +1,24 @@
+{
+  "name": "atividade_avaliativa_biblioteca_felipemielkevieira",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FelipeMielkeVieira/atividade_avaliativa_biblioteca_FelipeMielkeVieira.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/FelipeMielkeVieira/atividade_avaliativa_biblioteca_FelipeMielkeVieira/issues"
+  },
+  "homepage": "https://github.com/FelipeMielkeVieira/atividade_avaliativa_biblioteca_FelipeMielkeVieira#readme",
+  "dependencies": {
+    "firebase": "^9.8.4",
+    "firebase-admin": "^11.0.0"
+  }
+}
