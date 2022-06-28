@@ -8,7 +8,7 @@ router.get("/", (req, res) => {
 });
 
 router.get("/:cpf", (req, res) => {
-    res.json(autoresHandler.buscarPorCpf(req.params.id));
+    res.json(autoresHandler.buscarPorCpf(req.params.cpf));
 });
 
 router.post("/", (req, res) => {
