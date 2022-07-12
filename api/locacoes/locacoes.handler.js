@@ -95,7 +95,7 @@ async function criarLocacao(id, dado) {
 
     if(clienteExiste) {
         if(livrosExistentes == dado.livros.length) {
-            if(verificarDisponibilidadeCliente(dado.idCliente)) {
+            if(await verificarDisponibilidadeCliente(dado.idCliente)) {
                 let livrosLocacao = dado.livros;
 
                 delete dado.livros;
@@ -132,12 +132,12 @@ async function criarRelacionamentoLivro(dado, id, livros) {
 
 async function verificarDisponibilidadeCliente(id) {
     const locacoes = await crud.get("locacoes");
-    locacoes.forEach(async (e) => {
+    locacoes.forEach((e) => {
         if(e.idCliente == id) {
-            return false;
+            return Promise.resolve(false);
         }
     })
-    return true;
+    return Promise.resolve(true);
 }
 
 module.exports = {
