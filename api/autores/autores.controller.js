@@ -7,16 +7,16 @@ router.get("/", (req, res) => {
     autoresHandler.buscarAutores().then((resposta) => res.json(resposta));
 });
 
-router.get("/:cpf", (req, res) => {
-    res.json(autoresHandler.buscarPorCpf(req.params.cpf));
+router.get("/:id", (req, res) => {
+    autoresHandler.buscarPorId(req.params.id).then((resposta) => res.json(resposta));
 });
 
 router.post("/", (req, res) => {
-    res.json(autoresHandler.criarAutor(undefined, req.body));
+    autoresHandler.criarAutor(undefined, req.body).then((resposta) => res.json(resposta));
 });
 
-router.put("/:id", (req, res) => {
-    res.json(autoresHandler.criarAutor(req.params.id, req.body));
+router.delete("/:id", (req, res) => {
+    autoresHandler.excluirAutor(req.params.id).then((resposta) => res.json(resposta));
 })
 
 module.exports = router;
