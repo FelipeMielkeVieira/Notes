@@ -80,6 +80,11 @@ async function criarLocacao(id, dado) {
     const livros = await crud.get("livros");
     let livrosExistentes = 0;
 
+    const locacoesLivros = await crud.get("locacoes_livros");
+    let locacoesLivrosIguais = 0;
+
+    const locacoes = await crud.get("locacoes");
+
     clientes.forEach((e) => {
         if(e.id == dado.idCliente) {
             clienteExiste = true;
@@ -93,16 +98,41 @@ async function criarLocacao(id, dado) {
         }
     })
 
+    locacoesLivros.forEach((e) => {
+        locacoes.forEach((a) => {
+            if(a.status == "Em Aberto" && a.id == e.idLocacao) {
+                dado.livros.forEach((l) => {
+                    if(l == e.idLivro) {
+                        locacoesLivrosIguais++;
+                    }
+                })
+            }
+        })
+    })
+
     if(clienteExiste) {
         if(livrosExistentes == dado.livros.length) {
-            if(await verificarDisponibilidadeCliente(dado.idCliente)) {
-                let livrosLocacao = dado.livros;
 
-                delete dado.livros;
-                const dados = await crud.save("locacoes", id, dado);
-    
-                criarRelacionamentoLivro(dados, id, livrosLocacao);
-                return dado;
+            let locacaoDisponivel = true;
+            const locacoes = await crud.get("locacoes");
+            locacoes.forEach((e) => {
+                if(e.idCliente == dado.idCliente && e.status == "Em Aberto") {
+                    locacaoDisponivel = false;
+                }
+            })
+            
+            if(locacaoDisponivel) {
+                if(locacoesLivrosIguais == 0) {
+                    let livrosLocacao = dado.livros;
+
+                    delete dado.livros;
+                    const dados = await crud.save("locacoes", id, dado);
+        
+                    criarRelacionamentoLivro(dados, id, livrosLocacao);
+                    return dado;
+                } else {
+                    return {"erro": "O livro já está sendo alugado"}
+                }
             } else {
                 return {"erro": "Cliente já possui locação"}
             }
@@ -115,7 +145,10 @@ async function criarLocacao(id, dado) {
 }
 
 async function baixarLocacao(id) {
-    const dados = await crud.remove("locacoes", id);
+    const dado = await crud.getById("locacoes", id);
+    dado[0].status = "Finalizada";
+
+    const dados = await crud.save("locacoes", id, dado[0]);
     return dados;
 }
 
@@ -128,16 +161,6 @@ async function criarRelacionamentoLivro(dado, id, livros) {
         const livro = await crud.save("locacoes_livros", id, dadosLivro);
         return livro;
     })
-}
-
-async function verificarDisponibilidadeCliente(id) {
-    const locacoes = await crud.get("locacoes");
-    locacoes.forEach((e) => {
-        if(e.idCliente == id) {
-            return Promise.resolve(false);
-        }
-    })
-    return Promise.resolve(true);
 }
 
 module.exports = {
