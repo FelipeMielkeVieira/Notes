@@ -9,7 +9,7 @@ async function buscarLivros() {
 
     dados.forEach((e) => {
         editoras.forEach((a) => {
-            if(e.idEditora == a.id) {
+            if (e.idEditora == a.id) {
                 e.nomeEditora = a.nome
                 delete e.idEditora
             }
@@ -19,9 +19,9 @@ async function buscarLivros() {
     dados.forEach((e) => {
         let nomesAutores = [];
         autoresLivros.forEach((a) => {
-            if(e.id == a.idLivro) {
+            if (e.id == a.idLivro) {
                 autores.forEach((b) => {
-                    if(a.idAutor == b.id) {
+                    if (a.idAutor == b.id) {
                         nomesAutores.push(b.nome);
                     }
                 })
@@ -29,7 +29,6 @@ async function buscarLivros() {
         })
         e.autores = nomesAutores;
     })
-
     return dados;
 }
 
@@ -39,10 +38,10 @@ async function buscarPorId(id) {
     const editoras = await crud.get("editoras");
     const autores = await crud.get("autores");
     const autoresLivros = await crud.get("livros_autores");
-    
+
     dados.forEach((e) => {
         editoras.forEach((a) => {
-            if(e.idEditora == a.id) {
+            if (e.idEditora == a.id) {
                 e.nomeEditora = a.nome
                 delete e.idEditora
             }
@@ -52,9 +51,9 @@ async function buscarPorId(id) {
     dados.forEach((e) => {
         let nomesAutores = [];
         autoresLivros.forEach((a) => {
-            if(e.id == a.idLivro) {
+            if (e.id == a.idLivro) {
                 autores.forEach((b) => {
-                    if(a.idAutor == b.id) {
+                    if (a.idAutor == b.id) {
                         nomesAutores.push(b.nome);
                     }
                 })
@@ -62,7 +61,6 @@ async function buscarPorId(id) {
         })
         e.autores = nomesAutores;
     })
-
     return dados;
 }
 
@@ -77,26 +75,26 @@ async function criarLivro(id, dado) {
     const livros = await buscarLivros();
 
     livros.forEach((e) => {
-        if(e.isbn == dado.isbn) {
-            return {"erro": "ISBN Inválido"}
+        if (e.isbn == dado.isbn) {
+            return { "erro": "ISBN Inválido" }
         }
     })
 
     editoras.forEach((e) => {
-        if(e.id == dado.idEditora) {
+        if (e.id == dado.idEditora) {
             editoraExiste = true;
         }
     })
 
     autores.forEach((e) => {
         const c = dado.autores.some(a => a == e.id);
-        if(c) {
+        if (c) {
             autoresExistentes++;
         }
     })
 
-    if(editoraExiste) {
-        if(autoresExistentes == dado.autores.length) {
+    if (editoraExiste) {
+        if (autoresExistentes == dado.autores.length) {
             let autoresLivro = dado.autores;
 
             delete dado.autores;
@@ -105,10 +103,10 @@ async function criarLivro(id, dado) {
             criarRelacionamentoAutor(dados, id, autoresLivro);
             return dado;
         } else {
-            return {"erro": (dado.autores.length - autoresExistentes) + " autores inválidos"}
+            return { "erro": (dado.autores.length - autoresExistentes) + " autores inválidos" }
         }
     } else {
-        return {"erro: ": "Editora Inválida"}
+        return { "erro: ": "Editora Inválida" }
     }
 }
 
@@ -118,7 +116,7 @@ async function excluirLivro(id) {
 }
 
 async function criarRelacionamentoAutor(dado, id, autores) {
-    autores.forEach(async function(e) {
+    autores.forEach(async function (e) {
         const dadosAutor = {
             idAutor: e,
             idLivro: dado.id

@@ -13,11 +13,10 @@ async function buscarPorId(id) {
 async function criarCliente(id, dado) {
     const clientes = await buscarClientes();
     clientes.forEach((e) => {
-        if(e.cpf == dado.cpf) {
-            return {"erro": "CPF já está sendo usado"}
+        if (e.cpf == dado.cpf) {
+            return { "erro": "CPF já está sendo usado" }
         }
     })
-
     const dados = await crud.save("clientes", id, dado);
     return dado;
 }

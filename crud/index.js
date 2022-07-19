@@ -67,7 +67,7 @@ async function getById(nomeTabela, id) {
                 ...doc.data(),
                 id: doc.id
             }
-            lista.push(data);       
+            lista.push(data);
         }
     });
     return lista;
