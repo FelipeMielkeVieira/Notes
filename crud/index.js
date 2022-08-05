@@ -15,7 +15,7 @@ const app = initializeApp(firebaseConfig);
 
 const db = getFirestore();
 
-async function save(nomeTabela, id, dado) {
+async function salvar(nomeTabela, id, dado) {
     if (id) {
         const entidadeReferenciada = await setDoc(doc(db, nomeTabela, id), dado);
         const dadosSalvos = {
@@ -33,7 +33,7 @@ async function save(nomeTabela, id, dado) {
     }
 }
 
-async function get(nomeTabela) {
+async function pegar(nomeTabela) {
     const tableRef = collection(db, nomeTabela);
 
     const q = query(tableRef);
@@ -52,7 +52,7 @@ async function get(nomeTabela) {
     return lista;
 }
 
-async function getById(nomeTabela, id) {
+async function pegarPorID(nomeTabela, id) {
     const tableRef = collection(db, nomeTabela);
 
     const q = query(tableRef);
@@ -70,10 +70,10 @@ async function getById(nomeTabela, id) {
             lista.push(data);
         }
     });
-    return lista;
+    return lista[0];
 }
 
-async function remove(nomeTabela, id) {
+async function remover(nomeTabela, id) {
     const dado = await deleteDoc(doc(db, nomeTabela, id));
     return {
         message: `${id} deleted`
@@ -94,13 +94,13 @@ async function selectEditado(nomeTabela, nomeDado, condicao) {
         }
         listaNova.push(data);
     })
-    return listaNova[0];
+    return listaNova;
 }
 
 module.exports = {
-    save,
-    get,
-    getById,
-    remove,
+    salvar,
+    pegar,
+    pegarPorID,
+    remover,
     selectEditado
 }
