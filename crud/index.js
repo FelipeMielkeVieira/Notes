@@ -80,9 +80,28 @@ async function remove(nomeTabela, id) {
     }
 }
 
+async function returnSelect(nomeTabela, nomeDado, dado) {
+    const tableRef = collection(db, nomeTabela);
+    const q = query(tableRef, where(nomeDado, "==", dado));
+    const data = await getDocs(q)
+
+    const lista = [];
+
+    data.forEach((doc) => {
+        const data = {
+            ...doc.data(),
+            id: doc.id
+        }
+        lista.push(data);
+    })
+
+    return lista;
+}
+
 module.exports = {
     save,
     get,
     getById,
-    remove
+    remove,
+    returnSelect
 }
