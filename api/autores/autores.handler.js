@@ -12,7 +12,7 @@ async function buscarPorId(id) {
 
 async function criarAutor(id, dado) {
     const autorExistente = await crud.selectEditado("autores", "cpf", dado.cpf);
-    if(!autorExistente[0]) {
+    if(!autorExistente) {
         const dados = await crud.save("autores", id, dado);
         return dado;
     } else {

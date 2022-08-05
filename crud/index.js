@@ -94,7 +94,7 @@ async function selectEditado(nomeTabela, nomeDado, condicao) {
         }
         listaNova.push(data);
     })
-    return listaNova;
+    return listaNova[0];
 }
 
 module.exports = {

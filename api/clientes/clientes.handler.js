@@ -12,7 +12,7 @@ async function buscarPorId(id) {
 
 async function criarCliente(id, dado) {
     const clienteExistente = await crud.selectEditado("clientes", "cpf", dado.cpf);
-    if(!clienteExistente[0]) {
+    if(!clienteExistente) {
         const dados = await crud.save("cliente", id, dado);
         return dado;
     } else {

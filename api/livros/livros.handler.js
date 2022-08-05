@@ -3,20 +3,30 @@ const crud = require("../../crud");
 async function buscarLivros() {
     const dados = await crud.get("livros");
 
+    const editoras = await crud.get("editoras");
     dados.forEach((e) => {
-        const editoraLivro = await crud.selectEditado("editoras", "id", e.idEditora);
-        e.nomeEditora = editoraLivro[0].nome;
-        delete e.idEditora;
+        editoras.forEach((a) => {
+            if (e.idEditora == a.id) {
+                e.nomeEditora = a.nome
+                delete e.idEditora
+            }
+        })
     })
 
+    const autores = await crud.get("autores");
+    const autoresLivros = await crud.get("livros_autores");
     dados.forEach((e) => {
-        const idsAutores = await crud.selectEditado("livros_autores", "idLivro", e.id);
-        const listaAutores = [];
-        idsAutores.forEach((a) => {
-            const nomeAutor = await crud.selectEditado("autores", "id", a);
-            listaAutores.push(nomeAutor);
+        let nomesAutores = [];
+        autoresLivros.forEach((a) => {
+            if (e.id == a.idLivro) {
+                autores.forEach((b) => {
+                    if (a.idAutor == b.id) {
+                        nomesAutores.push(b.nome);
+                    }
+                })
+            }
         })
-        e.autores = listaAutores;
+        e.autores = nomesAutores;
     })
     return dados;
 }
@@ -24,46 +34,49 @@ async function buscarLivros() {
 async function buscarPorId(id) {
     const dados = await crud.getById("livros", id);
 
+    const editoras = await crud.get("editoras");
     dados.forEach((e) => {
-        const editoraLivro = await crud.selectEditado("editoras", "id", e.idEditora);
-        e.nomeEditora = editoraLivro[0].nome;
-        delete e.idEditora;
+        editoras.forEach((a) => {
+            if (e.idEditora == a.id) {
+                e.nomeEditora = a.nome
+                delete e.idEditora
+            }
+        })
     })
 
+    const autores = await crud.get("autores");
+    const autoresLivros = await crud.get("livros_autores");
     dados.forEach((e) => {
-        const idsAutores = await crud.selectEditado("livros_autores", "idLivro", e.id);
-        const listaAutores = [];
-        idsAutores.forEach((a) => {
-            const nomeAutor = await crud.selectEditado("autores", "id", a);
-            listaAutores.push(nomeAutor);
+        let nomesAutores = [];
+        autoresLivros.forEach((a) => {
+            if (e.id == a.idLivro) {
+                autores.forEach((b) => {
+                    if (a.idAutor == b.id) {
+                        nomesAutores.push(b.nome);
+                    }
+                })
+            }
         })
-        e.autores = listaAutores;
+        e.autores = nomesAutores;
     })
     return dados;
 }
 
 async function criarLivro(id, dado) {
 
-    const livroExistente = await crud.selectEditado("livros", "isbn", dado.isbn);
+    livroExistente = await crud.selectEditado("livros", "isbn", dado.isbn);
     if (livroExistente) {
-        return { erro: "ISBN Inválido!" }
+        return { "erro": "ISBN Inválido" }
     }
 
-    const editoraExiste = await crud.selectEditado("editoras", "id", dado.idEditora);
-    if (editoraExiste) {
+    editoraExistente = await crud.selectEditado("editoras", "id", dado.idEditora);
+    if (!editoraExistente) {
         return { erro: "Editora Inválida!" }
     }
 
-    let autoresExistentes = 0;
-    dado.autores.forEach((e) => {
-        const autorExistente = await crud.selectEditado("autores", "id", e);
-        if (autorExistente) {
-            autoresExistentes++;
-        }
-    })
-
-    if (autoresExistentes != dado.autores.length) {
-        return { erro: (dado.autores.length - autoresExistentes) + " autores inválidos!" }
+    const autores = await crud.get("autores");
+    if(!verificaAutores(autores, dado.autores)) {
+        return { erro: "Há autores inválidos!"}
     }
 
     let autoresLivro = dado.autores;
@@ -72,6 +85,22 @@ async function criarLivro(id, dado) {
 
     criarRelacionamentoAutor(dados, id, autoresLivro);
     return dado;
+}
+
+function verificaAutores(autoresTotais, listaAutores) {
+    let autoresExistentes = 0;
+    autoresTotais.forEach((e) => {
+        const c = listaAutores.some(a => a == e.id);
+        if (c) {
+            autoresExistentes++;
+        }
+    })
+
+    if (autoresExistentes != listaAutores.length) {
+        return false
+    } else {
+        return true;
+    }
 }
 
 async function criarRelacionamentoAutor(dado, id, autores) {
