@@ -3,144 +3,121 @@ const crud = require("../../crud");
 async function buscarLocacoes() {
     const dados = await crud.get("locacoes");
 
-    const clientes = await crud.get("clientes");
-    const livros = await crud.get("livros");
-    const livrosLocacoes = await crud.get("locacoes_livros");
-
     dados.forEach((e) => {
-        clientes.forEach((a) => {
-            if (e.idCliente == a.id) {
-                e.nomeCliente = a.nome
-                delete e.idCliente
-            }
-        })
+        const cliente = await crud.selectEditado("clientes", "id", e.idCliente)
+        e.nomeCliente = cliente[0].nome;
+        delete idCliente;
     })
 
     dados.forEach((e) => {
-        let nomesLivros = [];
-        livrosLocacoes.forEach((a) => {
-            if (e.id == a.idLocacao) {
-                livros.forEach((b) => {
-                    if (a.idLivro == b.id) {
-                        nomesLivros.push(b.nome);
-                    }
-                })
-            }
+        const idsLivros = await crud.selectEditado("locacoes_livros", "idLocacao", e.id);
+        const listaLivros = [];
+        idsLivros.forEach((a) => {
+            const nomeLivro = await crud.selectEditado("livros", "id", a);
+            listaLivros.push(nomeLivro);
         })
-        e.livros = nomesLivros;
+        e.livros = listaLivros;
     })
+
     return dados;
 }
 
 async function buscarPorCliente(id) {
-    const dados = await crud.get("locacoes");
-    let dadosNovos = [];
+    const dados = await crud.selectEditado("locacoes", "idCliente", id);
 
     dados.forEach((e) => {
-        if (e.idCliente == id) {
-            dadosNovos.push(e);
-        }
+        const cliente = await crud.selectEditado("clientes", "id", e.idCliente)
+        e.nomeCliente = cliente[0].nome;
+        delete idCliente;
     })
 
-    const clientes = await crud.get("clientes");
-    const livros = await crud.get("livros");
-    const livrosLocacoes = await crud.get("locacoes_livros");
-
-    dadosNovos.forEach((e) => {
-        clientes.forEach((a) => {
-            if (e.idCliente == a.id) {
-                e.nomeCliente = a.nome
-                delete e.idCliente
-            }
+    dados.forEach((e) => {
+        const idsLivros = await crud.selectEditado("locacoes_livros", "idLocacao", e.id);
+        const listaLivros = [];
+        idsLivros.forEach((a) => {
+            const nomeLivro = await crud.selectEditado("livros", "id", a);
+            listaLivros.push(nomeLivro);
         })
+        e.livros = listaLivros;
     })
 
-    dadosNovos.forEach((e) => {
-        let nomesLivros = [];
-        livrosLocacoes.forEach((a) => {
-            if (e.id == a.idLocacao) {
-                livros.forEach((b) => {
-                    if (a.idLivro == b.id) {
-                        nomesLivros.push(b.nome);
-                    }
-                })
-            }
-        })
-        e.livros = nomesLivros;
-    })
-    return dadosNovos;
+    return dados;
 }
 
 async function criarLocacao(id, dado) {
 
-    const clientes = await crud.get("clientes");
-    let clienteExiste = false;
-
-    const livros = await crud.get("livros");
-    let livrosExistentes = 0;
-
-    const locacoesLivros = await crud.get("locacoes_livros");
-    let locacoesLivrosIguais = 0;
-
     const locacoes = await crud.get("locacoes");
 
-    clientes.forEach((e) => {
-        if (e.id == dado.idCliente) {
-            clienteExiste = true;
-        }
-    })
+    const clienteExistente = await crud.selectEditado("cliente", "id", dado.idCliente);
+    if (!clienteExistente) {
+        return { erro: "Cliente Inválido!" }
+    }
 
-    livros.forEach((e) => {
-        const c = dado.livros.some(a => a == e.id);
+    const livros = await crud.get("livros");
+    if(!verificarLivrosInvalidos(livros, dado.livros)) {
+        return { erro: "Há livros inválidos na locação!"}
+    }
+
+    const locacoesLivros = await crud.get("locacoes_livros");
+    if (!verificarLivrosLocados(locacoes, locacoesLivros, dado.livros)) {
+        return { erro: "Há livros já locados!" }
+    }
+
+    if (!clienteDisponivel(locacoes, dado.idCliente)) {
+        return { erro: "Cliente já possui locação aberta!" }
+    }
+
+    let livrosLocacao = dado.livros;
+    delete dado.livros;
+    const dados = await crud.save("locacoes", id, dado);
+
+    criarRelacionamentoLivro(dados, id, livrosLocacao);
+    return dado;
+}
+
+function verificarLivrosInvalidos(livrosTotais, listaLivros) {
+    let livrosExistentes = 0;
+    livrosTotais.forEach((e) => {
+        const c = listaLivros.some(a => a == e.id);
         if (c) {
             livrosExistentes++;
         }
     })
+    if (livrosTotais < listaLivros.length) {
+        return false;
+    } else {
+        return true;
+    }
+}
 
+function verificarLivrosLocados(locacoes, locacoesLivros, listaLivros) {
+    let locacoesLivrosIguais = 0;
     locacoesLivros.forEach((e) => {
         locacoes.forEach((a) => {
             if (a.status == "Em Aberto" && a.id == e.idLocacao) {
-                dado.livros.forEach((l) => {
-                    if (l == e.idLivro) {
+                listaLivros.forEach((b) => {
+                    if (b == e.idLivro) {
                         locacoesLivrosIguais++;
                     }
                 })
             }
         })
     })
-
-    if (clienteExiste) {
-        if (livrosExistentes == dado.livros.length) {
-
-            let locacaoDisponivel = true;
-            const locacoes = await crud.get("locacoes");
-            locacoes.forEach((e) => {
-                if (e.idCliente == dado.idCliente && e.status == "Em Aberto") {
-                    locacaoDisponivel = false;
-                }
-            })
-
-            if (locacaoDisponivel) {
-                if (locacoesLivrosIguais == 0) {
-                    let livrosLocacao = dado.livros;
-
-                    delete dado.livros;
-                    const dados = await crud.save("locacoes", id, dado);
-
-                    criarRelacionamentoLivro(dados, id, livrosLocacao);
-                    return dado;
-                } else {
-                    return { "erro": "O livro já está sendo alugado" }
-                }
-            } else {
-                return { "erro": "Cliente já possui locação" }
-            }
-        } else {
-            return { "erro": (dado.livros.length - livrosExistentes) + " livros inválidos" }
-        }
+    if(locacoesLivrosIguais > 0) {
+        return false;
     } else {
-        return { "erro: ": "Cliente Inválido" }
+        return true;
     }
+}
+
+function clienteDisponivel(locacoes, idCliente) {
+    let locacaoDisponivel = true;
+    locacoes.forEach((e) => {
+        if (e.idCliente == idCliente && e.status == "Em Aberto") {
+            locacaoDisponivel = false;
+        }
+    })
+    return locacaoDisponivel;
 }
 
 async function baixarLocacao(id) {

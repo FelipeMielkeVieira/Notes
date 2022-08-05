@@ -3,31 +3,20 @@ const crud = require("../../crud");
 async function buscarLivros() {
     const dados = await crud.get("livros");
 
-    const editoras = await crud.get("editoras");
-    const autores = await crud.get("autores");
-    const autoresLivros = await crud.get("livros_autores");
-
     dados.forEach((e) => {
-        editoras.forEach((a) => {
-            if (e.idEditora == a.id) {
-                e.nomeEditora = a.nome
-                delete e.idEditora
-            }
-        })
+        const editoraLivro = await crud.selectEditado("editoras", "id", e.idEditora);
+        e.nomeEditora = editoraLivro[0].nome;
+        delete e.idEditora;
     })
 
     dados.forEach((e) => {
-        let nomesAutores = [];
-        autoresLivros.forEach((a) => {
-            if (e.id == a.idLivro) {
-                autores.forEach((b) => {
-                    if (a.idAutor == b.id) {
-                        nomesAutores.push(b.nome);
-                    }
-                })
-            }
+        const idsAutores = await crud.selectEditado("livros_autores", "idLivro", e.id);
+        const listaAutores = [];
+        idsAutores.forEach((a) => {
+            const nomeAutor = await crud.selectEditado("autores", "id", a);
+            listaAutores.push(nomeAutor);
         })
-        e.autores = nomesAutores;
+        e.autores = listaAutores;
     })
     return dados;
 }
@@ -35,84 +24,54 @@ async function buscarLivros() {
 async function buscarPorId(id) {
     const dados = await crud.getById("livros", id);
 
-    const editoras = await crud.get("editoras");
-    const autores = await crud.get("autores");
-    const autoresLivros = await crud.get("livros_autores");
-
     dados.forEach((e) => {
-        editoras.forEach((a) => {
-            if (e.idEditora == a.id) {
-                e.nomeEditora = a.nome
-                delete e.idEditora
-            }
-        })
+        const editoraLivro = await crud.selectEditado("editoras", "id", e.idEditora);
+        e.nomeEditora = editoraLivro[0].nome;
+        delete e.idEditora;
     })
 
     dados.forEach((e) => {
-        let nomesAutores = [];
-        autoresLivros.forEach((a) => {
-            if (e.id == a.idLivro) {
-                autores.forEach((b) => {
-                    if (a.idAutor == b.id) {
-                        nomesAutores.push(b.nome);
-                    }
-                })
-            }
+        const idsAutores = await crud.selectEditado("livros_autores", "idLivro", e.id);
+        const listaAutores = [];
+        idsAutores.forEach((a) => {
+            const nomeAutor = await crud.selectEditado("autores", "id", a);
+            listaAutores.push(nomeAutor);
         })
-        e.autores = nomesAutores;
+        e.autores = listaAutores;
     })
     return dados;
 }
 
 async function criarLivro(id, dado) {
 
-    const editoras = await crud.get("editoras");
-    let editoraExiste = false;
+    const livroExistente = await crud.selectEditado("livros", "isbn", dado.isbn);
+    if (livroExistente) {
+        return { erro: "ISBN Inválido!" }
+    }
 
-    const autores = await crud.get("autores");
+    const editoraExiste = await crud.selectEditado("editoras", "id", dado.idEditora);
+    if (editoraExiste) {
+        return { erro: "Editora Inválida!" }
+    }
+
     let autoresExistentes = 0;
-
-    const livros = await buscarLivros();
-
-    livros.forEach((e) => {
-        if (e.isbn == dado.isbn) {
-            return { "erro": "ISBN Inválido" }
-        }
-    })
-
-    editoras.forEach((e) => {
-        if (e.id == dado.idEditora) {
-            editoraExiste = true;
-        }
-    })
-
-    autores.forEach((e) => {
-        const c = dado.autores.some(a => a == e.id);
-        if (c) {
+    dado.autores.forEach((e) => {
+        const autorExistente = await crud.selectEditado("autores", "id", e);
+        if (autorExistente) {
             autoresExistentes++;
         }
     })
 
-    if (editoraExiste) {
-        if (autoresExistentes == dado.autores.length) {
-            let autoresLivro = dado.autores;
-
-            delete dado.autores;
-            const dados = await crud.save("livros", id, dado);
-
-            criarRelacionamentoAutor(dados, id, autoresLivro);
-            return dado;
-        } else {
-            return { "erro": (dado.autores.length - autoresExistentes) + " autores inválidos" }
-        }
-    } else {
-        return { "erro: ": "Editora Inválida" }
+    if (autoresExistentes != dado.autores.length) {
+        return { erro: (dado.autores.length - autoresExistentes) + " autores inválidos!" }
     }
-}
 
-async function excluirLivro(id) {
-    const dados = await crud.remove("livros", id);
-    return dados;
+    let autoresLivro = dado.autores;
+    delete dado.autores;
+    const dados = await crud.save("livros", id, dado);
+
+    criarRelacionamentoAutor(dados, id, autoresLivro);
+    return dado;
 }
 
 async function criarRelacionamentoAutor(dado, id, autores) {
@@ -124,6 +83,11 @@ async function criarRelacionamentoAutor(dado, id, autores) {
         const autor = await crud.save("livros_autores", id, dadosAutor);
         return autor;
     })
+}
+
+async function excluirLivro(id) {
+    const dados = await crud.remove("livros", id);
+    return dados;
 }
 
 module.exports = {

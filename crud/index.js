@@ -80,22 +80,21 @@ async function remove(nomeTabela, id) {
     }
 }
 
-async function returnSelect(nomeTabela, nomeDado, dado) {
-    const tableRef = collection(db, nomeTabela);
-    const q = query(tableRef, where(nomeDado, "==", dado));
-    const data = await getDocs(q)
+async function selectEditado(nomeTabela, nomeDado, condicao) {
 
-    const lista = [];
+    const tableRef = collection(db, nomeTabela);
+    const q = query(tableRef, where(nomeDado, "==", condicao));
+    const data = await getDocs(q)
+    const listaNova = [];
 
     data.forEach((doc) => {
         const data = {
             ...doc.data(),
             id: doc.id
         }
-        lista.push(data);
+        listaNova.push(data);
     })
-
-    return lista;
+    return listaNova;
 }
 
 module.exports = {
@@ -103,5 +102,5 @@ module.exports = {
     get,
     getById,
     remove,
-    returnSelect
+    selectEditado
 }
